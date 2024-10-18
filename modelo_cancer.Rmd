@@ -412,14 +412,14 @@ mod3<-lm(MUERTES_POR_100K~ MEDIANA_INGRESOS+
 
 
 ```{r, echo=FALSE, message=FALSE}
-# Modelo 4 MODELO OCTAVIO
+# Modelo 4 MODELO 
 mod4<-lm(MUERTES_POR_100K ~ PORCENTAJE_POBLACION_POBREZA + MEDIANA_INGRESOS + PORCENTAJE_CASADOS + PORCENTAJE_EMPLEADOS + PORCENTAJE_ASIATICOS + TASA_NATALIDAD, data = counties_map)
 # summary(mod4)
 ```
 
 
 ```{r, echo=FALSE}
-# Modelo 5 stepwise David producto de stepwise
+# Modelo 5 stepwise 
 mod5<-lm(MUERTES_POR_100K ~  PORCENTAJE_SOLO_COB_PUBLICA + PORCENTAJE_OTRO_GRUPO + 
             PORCENTAJE_POBLACION_POBREZA + PORCENTAJE_DESEMPLEADOS + 
             MEDIANA_INGRESOS + PORCENTAJE_SOLO_COB_PRIVADA + TASA_NATALIDAD + 
@@ -431,7 +431,7 @@ mod5<-lm(MUERTES_POR_100K ~  PORCENTAJE_SOLO_COB_PUBLICA + PORCENTAJE_OTRO_GRUPO
 
 ```{r, echo=FALSE}
 
-# Propuesta Modelo Marco variables de segundo nivel 
+# Propuesta Modelo variables de segundo nivel 
 counties_map$state_name<-as.factor(counties_map$state_name)
 datos <- subset(counties_map, select = -c(county_full, geometry))
 
