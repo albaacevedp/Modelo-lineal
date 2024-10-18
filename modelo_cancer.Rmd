@@ -1,0 +1,656 @@
+---
+output:
+  pdf_document: default
+  word_document: default
+header-includes: null
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(root.dir = "G:/Mi unidad/EEA/2o/Regression/Tarea/Proyecto")
+```
+
+# PROYECTO FINAL: MODELO LINEAL DE INCIDENCIA DE CANCER
+
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+# Librerías a utilizar
+library("ggplot2")
+library("gplots")
+library("stargazer")
+library("gmodels")
+library("reshape2")
+library("Rmisc")
+library("xtable")
+library("easystats")
+library("wesanderson")
+library("tidyverse")
+library("multcomp")
+library("performance")
+library("knitr")
+library("rms")
+library("apaTables")
+library("astsa")
+library("lmtest")
+library("olsrr")
+library("mice")
+library("naniar")
+library("maps")
+library("psych")
+library("readxl")
+library("skimr")
+library("patchwork")
+library("vcdExtra")
+# library("urbnmapr")
+```
+El documento aborda el desarrollo de un modelo de regresión para predecir las muertes por cáncer. Incluye la validación de resultados teóricos mediante simulaciones, la obtención de conclusiones para abordar problemas prácticos utilizando modelos de regresión, el proceso de selección de variables y la realización de pruebas de hipótesis para un modelo de regresión múltiple.
+
+## Introducción
+
+El cáncer es la segunda causa de muerte en Estados Unidos. En 2024, de acuerdo a la American Cáncer Society (2024), la expectativa de diagnóstico es de poco más de 2 millones de nuevos casos, de los cuales se esperan alrededor 611, 720 decesos durante ese año. Sí bien la dimensión de la magnitud de la enfermedad es en sí mismo objeto de atención, las desigualdades alrededor de actividades en la prevención, diagnóstico oportuno, tratamiento y cuidados paliativos por motivos no médicos. Los motivos no médicos como las características étnicas, condiciones de origen, y vida de las personas evidencian las brechas existentes en la atención de la salud. Por tanto, si se desea que la atención a salud sea un factor que potencie las oportunidades de acumulación de capital humano, las capacidades de las personas para disfrutar de una vida plena en un contexto de alta movilidad social en una sociedad justa y próspera, la identificación, cuantificación y eliminación de desigualdades en la atención del cáncer es temática propia de salud pública y un aspecto fundamental. Por lo anterior, empleamos la técnica de regresión lineal múltiple como una herramienta para la identificación de las disparidades, en el diseño de política pública y seguimiento de los resultados de la intervención, con el objetivo de que la población tenga las condiciones más óptimas para hacer frente a este desafío de salud.
+
+En el presente reporte, presentamos dos objetivos: en primer lugar, buscamos obtener un modelo de o la (s) variable (s) dependiente (s) del cáncer en términos de características sociodemográficas reflejadas a nivel de condado en Estados Unidos. En el segundo objetivo, buscamos realizar inferencia sobre los regresores que permitan evidenciar desigualdades estructurales en la atención del cáncer.
+Nuestra hipótesis se centra en analizar el cáncer a través de variables sociodemográficas tales como las características individuales de las personas, o características inherentes al estatus socioeconómico tales como desigualdades en el proceso de prevención, detección, tratamiento y cuidados del cáncer. Así, se pretende mostrar que ciertos grupos presentan menores actividades de prevención que se traducen en mayores factos de riesgo, menores elementos de detección oportuna, rezagos en el tratamiento de la enfermedad, menores cuidados paliativos y consecuencias mortales de la enfermedad.
+
+
+## Marco Teorico 
+
+### Modelos lineales de predicción de cáncer a través de variables sociodemográficas  <br> 
+
+Diversos autores modelan factores socioeconómicos asociados a las distintas etapas de la enfermedad del cáncer, tanto en asociaciones con características individuales o bien en asociaciones con características poblacionales de agregados geográficos. Chen (2018) muestra variaciones regionales del riesgo de padecer cáncer de seno en el estado de Illinois a través de estimar un modelo de regresión ponderada de forma geográfica. Liss., et al (2014) muestran que la disparidad inicial en tasas de diagnóstico al día de cáncer colorrectal, algunas pueden ser comprendidas en términos de su estatus socioeconómico, ya que tras ajustar por el nivel socioeconómico, se observan las diferencias entre grupos étnicos, aunque, señalan de forma adicional que el acceso a un seguro médico también contribuyen a explicar las diferencias raciales. Un estudio similar a Liss., et al, fue descrito por LaPar et al (2011) donde a partir de regresión lineal múltiple analizan resultados de atender cáncer pulmonar encontraron que un bajo estatus socioeconómico está relacionado con un incremento en el riesgo de muerte en hospital.  Tavera-Zepeda (2013) modeló la adherencia terapéutica (medida en que la conducta del paciente) en términos de características del paciente, como son nivel socioeconómico, duración de la enfermedad, relación médico-paciente, edad, sexo y comorbilidades.
+
+### Efectos de variables sociodemográficas sobre el cáncer para mostrar las desigualdades  
+
+**Relación de la tasa de mortalidad por cáncer y la tasa de nacimientos**
+
+Las investigaciones de diversos estudios indican una relación compleja entre las tasas de mortalidad por cáncer y el lugar de nacimiento. Hallowell (2019) descubrió que las personas nacidas en el extranjero generalmente tienen tasas de mortalidad por cáncer más bajas, pero tasas más altas de cánceres relacionados con infecciones. Mancuso (1974) destacó la influencia del lugar de nacimiento y la migración sobre la mortalidad por cáncer, particularmente entre los hombres no blancos. Bader (1979) informó una mayor incidencia de cáncer en los lactantes que la mortalidad, lo que sugiere mejores tasas de supervivencia. Kort (2009) observó una disminución en las tasas de mortalidad por cáncer en todas las cohortes de nacimiento, lo que indica el impacto de una mejor detección, tratamiento y prevención. Por lo anterior, la migración y la cohorte (grupos de personas con una característica compartida) de nacimiento pueden inflnir en las tasas de mortalidad por cáncer en los EE. UU. 
+
+*La tasa de nacimientos, puede influir de manera negativa, en la tasa de mortalidad por cáncer.*
+
+
+**Relación entre la tasa de mortalidad por cáncer y el nivel de pobreza**
+
+Las investigaciones muestran consistentemente una relación significativa entre la pobreza y las tasas de mortalidad por cáncer en los EE. UU. Marcus (2017) y Moss (2020) descubrieron que el aislamiento social y la pobreza vecinal se asocian de forma independiente con un mayor riesgo de mortalidad por cáncer. Moss (2020) demostró además que los condados con pobreza persistente tienen tasas de mortalidad por cáncer más altas, lo que sugiere un impacto a largo plazo de la pobreza en los resultados del cáncer. Boscoe (2014) y Boscoe (2016) también encontraron una fuerte relación entre la tasa de pobreza del área y la incidencia del cáncer, y las áreas de mayor pobreza tienen tasas más altas de diagnóstico de cáncer, particularmente en una etapa distante. Estos hallazgos resaltan la necesidad de intervenciones específicas para abordar el impacto de la pobreza en los resultados del cáncer. En el estudio de Ward et al (2014) se documentó que estadounidenses que residen en condados con población en pobreza de 20% o mayor tienen tasas de muerte 13% más altas en comparación con condados donde el porcentaje de población en pobreza es de 20% o menor. Estos estudios, demuestran que los condados con pobreza persistente tienen tasas de mortalidad por cáncer más altas, lo que sugiere un impacto a largo plazo de la pobreza en los resultados del cáncer. 
+
+*La tasa de mortalidad por cáncer, se ve influida con fuerza y en forma positiva por el nivel de pobreza.*
+
+**Relación de la tasa de muertes por cáncer con la mediana de ingresos**
+
+Withrow et al (2019) documentan que las disparidades en mortalidad de cáncer por nivel de ingreso de los condados han aumentado en el tiempo. En población de 25 a 64 años de edad, la tasa de mortalidad de cáncer  es 30% mayor entre 1999 y 2001, y es 56% mayor entre 1999 y 2013-2015. Además, mencionan que de haberse observado las tasas de supervivencia de los condados con mayor riqueza, el 21.5% de las muertes por cáncer entre población de 25 a 64 años de edad se hubiesen evitado en 2015. Variables socioeconómicas se relacionan con enfermedad cancerosa desde la prevención (consumo de drogas legales e ilegales, hábitos de actividad física, hábitos alimenticios cuestionables, y aparición  de sobrepeso  u obesidad),  el  diagnóstico  a  través  de la detección temprana (dependiendo del tipo de cáncer, pueden ser mamografías, pruebas de detección de cáncer colorrectal, pruebas de  Papanicolau),  el  acceso  a  tratamiento  curativo  (quimioterapia,  radioterapia y/ o cirugías de extirpación de tumores) y, no menos importante,  la provisión de cuidados  paliativos.  Chegg  et al (2009) documentaron  que bajo nivel educativo y bajo nivel de ingreso está asociado a  mayor incidencia de cáncer de pulmón, y bajo ingreso aumenta el riesgo relativo de cáncer de mama en mujeres y cáncer de próstata en hombres en etapa distante. 
+
+*En relación con el proyecto, la tasa de mortalidad por cáncer está relacionada de manera fuerte y negativa con la mediana de ingresos. En relación con el proyecto, la tasa de mortalidad por cáncer está relacionada de manera negativa con la mediana de ingresos.*
+
+**Relación entre la tasa de mortalidad por cáncer, por sexo y edad**
+
+Los hombres tuvieron un riesgo significativamente mayor en 34 de los 39. La investigación muestra consistentemente una fuerte relación entre la edad y las tasas de mortalidad por cáncer. Kesteloot (1994)  y Tallarida  (1993) encontraron que las tasas de mortalidad por cáncer aumentan con la edad, y Kesteloot observó una disminución en la tasa de aumento de la mortalidad por cáncer a edades más avanzadas.  Mor (1985) fortalece el argumento de Kesteloot, encontrando que los pacientes mayores de cáncer tienen más probabilidades de ser diagnosticados con metástasis y menos probabilidades de recibir quimioterapia y radioterapia.  Harding (2012) se suma a esto al mostrar que las tasas de incidencia y mortalidad por cáncer disminuyen entre las personas muy mayores. Estos hallazgos, subrayan la importancia de la edad como un factor significativo en las tasas de mortalidad por cáncer. Las razones subyacentes detrás de las diferencias de sexo en la supervivencia del cáncer, son necesarias para abordar las desigualdades. Las razones subyacentes detrás de las diferencias de sexo en la supervivencia del  cáncer,  son  necesarias para abordar las desigualdades. Los hallazgos indicados anteriormente, subrayan la importancia de la edad como un factor significativo en las tasas de mortalidad por cáncer. 
+
+*En relación con el proyecto, La mejor supervivencia explica parte de la ventaja en la mortalidad por cáncer para las mujeres.  El sexo masculino se relaciona con un mayor riesgo y una supervivencia más precaria para la mayoría de los sitios de cáncer.*
+
+**Relación de la tasa de muerte por cáncer y la edad de las mujeres**  
+
+Las  investigaciones  han demostrado una relación compleja entre las tasas de mortalidad por cáncer y las mujeres. Logan (1953) descubrió que las mujeres solteras y casadas sin hijos tenían tasas altas de mortalidad por cáncer de mama, mientras que las mujeres casadas tenían tasas altas por cáncer de útero. Reeves (2007) exploró esto más a fondo, vinculando un mayor índice de masa corporal con un mayor riesgo de cáncer en las mujeres, particularmente de endometrio y de mama. Abbasí (2017) informó una disminución en las tasas generales de muerte por cáncer en las mujeres, pero un aumento en el cáncer de útero. Rubin (2014) destacó la necesidad de un marco feminista  e interseccional para comprender  los diversos factores que influyen en la incidencia  y la mortalidad del cáncer en las mujeres. Las fuerzas de mortalidad creadas por el cáncer de mama se han examinado utilizando datos recopilados durante los últimos 19 años por el Registro de Cáncer del Upstate Medical Center de Syracuse,  Nueva  York, en 3.558 mujeres. Excepto 15 que se perdieron durante el seguimi ento, se estableció contacto con todos anualmente hasta 1974 o hasta su muerte. Se registraron  la  hora  y la causa  de  todas  las muertes.  En  abril de 1975, 1.883 permanecen vivas; y en el registro, y 1.660 mujeres han fallecido. Utilizando análisis de tablas de mortalidad y considerando las muertes  debidas  únicamente  al  cáncer  de  mama,  se calcularon  las tasas de mortalidad para tres grupos  de edad:  de  21 a  50 años,  de 51 a  70 años  y  de  71 a  100 años.  El cáncer  de mama expresa su letalidad con mayor fuerza  en el grupo  de mayor  edad. El tiempo  medio de  muerte (tasa de mortalidad del 50%) para el grupo más joven  fue de 13 años,  para el grupo  medio  de 8 años  y  para el grupo de mayor edad  de 5 años. La  tasa  de  mortalidad  dependía  tanto de la edad  como  del  escenario  en el momento del diagnóstico. Entre los 16 y 18 años después del diagnóstico, las muertes por cáncer de mama comienzan a desaparecer. El ochenta y ocho por ciento de las mujeres que murieron después de un diagnóstico de cáncer de mama han muerto a causa de su cáncer de mama. La edad y el escenario en el momento del diagnóstico  son determinantes  importantes de la  duración  de la supervivencia  y  la  causa  de la muerte. 
+
+*En relación con el proyecto, las mujeres son propensas a varios tipos de cáncer (mama, útero y endometrio). Por lo que, a mayor población de mujeres aumenta la tasa de mortalidad por cáncer.*
+
+**Relación de la tasa de muertes por cáncer y la ubicación geográfica del paciente**
+
+Varios estudios han informado sobre la variación en la mortalidad por cáncer por estado. Esta variación, se explica, al  menos  parcialmente,  por diferencias en los factores de riesgo,  factores socioeconómicos y acceso a tratamiento de alta calidad. Por ejemplo,  las tasas de tabaquismo  han disminuido en los Estados Unidos, pero esta disminución varió según la ubicación. De manera similar, si bien la obesidad aumentó en los últimos años en todo Estados Unidos, la tasa de aumento varió ampliamente. 
+
+Además, el acceso a la salud, la atención médica y la calidad de la atención médica disponible varían enormemente entre los estados y los diferentes grupos socioeconómicos. La mayoría de los informes anteriores, sobre las diferencias geográficas en la mortalidad por cáncer se han centrado en variación por estado, con menos información disponible a nivel de condado. Hay un valor para datos a nivel de condado, porque los programas y políticas de salud pública están diseñados e implementados a nivel local. Además, la información local también puede ser útil para las clínicas de salud. Para comprender las necesidades de la comunidad para la atención y ayuda en la identificación del cáncer.  
+
+*En  relación  con el proyecto, el acceso a  la salud (porcentaje de coberturas), La atención médica y la calidad de la atención médica disponible varían enormemente entre los estados y los diferentes grupos socioeconómicos (mediana ingresos), por lo que estas variables inciden en la tasa de mortalidad. * 
+
+## Contextualización de la base de datos  
+
+La base de datos presentó la siguiente información:
+
+```{=latex}
+\begin{table}[h!]
+ \centering
+  \caption{Nombre de la variable y descripción} 
+\begin{tabular}{|l|l|l|l|}
+\hline
+\multicolumn{1}{|c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Nombre\\ variable\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Descripción\\ variable\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Nombre\\ variable\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Descripción\\ variable\end{tabular}}}  \\ \hline
+Índice                                                                                   & Índice de la observación                                                                     & Media\_de\_casos                                                                        & \begin{tabular}[c]{@{}l@{}}Número promedio de casos \\ anuales\end{tabular}                   \\ \hline
+\begin{tabular}[c]{@{}l@{}}Muertes\_anuales\_\\ promedio\end{tabular}                    & \begin{tabular}[c]{@{}l@{}}Muertes promedio anuales \\ por cáncer\end{tabular}               & Muertes\_por\_100K                                                                      & \begin{tabular}[c]{@{}l@{}}Muertes por cáncer por cada \\ 100 mil hab.\end{tabular}           \\ \hline
+Tasa\_de\_incidencia                                                                     & Tasa de incidencia de cáncer                                                                 & Mediana\_ingresos                                                                       & Ingreso mediano en el condado                                                                 \\ \hline
+\begin{tabular}[c]{@{}l@{}}Poblacion\_estimada\_\\ 2015\end{tabular}                     & Población estimada en 2015                                                                   & \begin{tabular}[c]{@{}l@{}}Porcentaje\_poblacion\_\\ pobreza\end{tabular}               & \begin{tabular}[c]{@{}l@{}}Porcentaje de población por \\ debajo línea pobreza\end{tabular}   \\ \hline
+\begin{tabular}[c]{@{}l@{}}Estudios\_clinicos\_\\ percapita\end{tabular}                 & \begin{tabular}[c]{@{}l@{}}Número de estudios clínicos \\ per cápita\end{tabular}            & Ingresos\_almacenados                                                                   & \begin{tabular}[c]{@{}l@{}}Ingreso del condado por \\ intervalos\end{tabular}                 \\ \hline
+Mediana\_edad                                                                            & Edad mediana en el condado                                                                   & Mediana\_edad\_hombres                                                                  & \begin{tabular}[c]{@{}l@{}}Edad mediana de los hombres \\ en el condado\end{tabular}          \\ \hline
+Mediana\_edad\_mujer                                                                     & \begin{tabular}[c]{@{}l@{}}Edad mediana de las mujeres \\ en el condado\end{tabular}         & Localidad                                                                               & Nombre del condado y estado                                                                   \\ \hline
+Porcentaje\_casados                                                                      & \begin{tabular}[c]{@{}l@{}}Porcentaje de la población \\ en matrimonio\end{tabular}          & Porcentaje\_empleados                                                                   & \begin{tabular}[c]{@{}l@{}}Porcentaje de la población \\ con empleo\end{tabular}              \\ \hline
+Porcentaje\_desempleados                                                                 & \begin{tabular}[c]{@{}l@{}}Porcentaje de la población \\ desempleada\end{tabular}            & Porcentaje\_cob\_privada                                                                & \begin{tabular}[c]{@{}l@{}}Porc. pob. cobertira de seguro \\ por empleador\end{tabular}       \\ \hline
+\begin{tabular}[c]{@{}l@{}}Porcentaje\_solo\_cob\_\\ privada\end{tabular}                & \begin{tabular}[c]{@{}l@{}}Porc. pob. solo con seguro \\ de salud privado\end{tabular}       & Porcentaje\_cob\_publica                                                                & \begin{tabular}[c]{@{}l@{}}Porcentaje de población con\\ seguro público de salud\end{tabular} \\ \hline
+\begin{tabular}[c]{@{}l@{}}Porcentaje\_solo\_cob\_\\ publica\end{tabular}                & \begin{tabular}[c]{@{}l@{}}Porc. pob. solo con seguro\\  de salud público\end{tabular}       & Porcentaje\_blancos                                                                     & Porcentaje de población blanca                                                                \\ \hline
+Porcentaje\_negros                                                                       & \begin{tabular}[c]{@{}l@{}}Porcentaje de población \\ afroamericana\end{tabular}             & Porcentaje\_asiaticos                                                                   & Porcentaje de población asiática                                                              \\ \hline
+Porcentaje\_otro\_grupo                                                                  & \begin{tabular}[c]{@{}l@{}}Porcentaje de población \\ de otras etnias\end{tabular}           & Tasa\_natalidad                                                                         & Tasa natalidad en el condado                                                                  \\ \hline
+\end{tabular}
+\end{table}
+```
+
+Esta información se presenta para el año 2015 a nivel condado (equivalente a distrito), las fuentes son *clinicaltrials.gov*, *cancer.gov* y *census.gov*, con un total de $3,047$ observaciones, las cuales corresponden al $93.95\%$ del total de condados en Estados Unidos ($3,243$, al incluir condados equivalentes). Es decir, tenemos observaciones faltantes en los renglones de condados. No solo los renglones están incompletos en términos de los condados, sino que existen dos variables con datos faltantes. Estos datos faltantes pueden deberse a las políticas internas de cada condado.
+
+```{r, echo=FALSE}
+datos<-read.csv("BD02P.txt", header = TRUE,  sep = "|", dec = ".")
+```
+
+```{r, echo=FALSE}
+vis_miss(datos)
+```
+
+Como se advierte en la gráfica anterior, la variable *PORCENTAJE_EMPLEADOS* cuenta con $5%$ de las observaciones con valores faltantes, mientras la variable *PORCENTAJE_SOLO_COB_PRIVADA* cuenta con un $20%$ de las observaciones con valores faltantes. Ambas variables se imputaron usando la librería *mice*.
+
+```{r, echo=FALSE, message = FALSE, warning=FALSE, include=FALSE}
+set.seed(1705)
+datosimp<-mice(datos,m=5,method=NULL,seed=1705,where=NULL)
+datos<-complete(datosimp)
+```
+
+## Desarrollo para atender los objetivos:
+
+### ¿Cuál es la variable dependiente a utilizar?
+
+Se realizó un anális de estadística descriptiva considerando al conjunto de variables dependientes candidatas a utilizar en el modelo. 
+
+```{r,echo=FALSE}
+# Definir variables continua y categoricas
+datos$INGRESOS_ALMACENDADOS <- as.factor(datos$INGRESOS_ALMACENDADOS)
+datos$LOCALIDAD <- as.factor(datos$LOCALIDAD)
+
+vdep<-datos[ ,c(2,3,4,5)]
+#describe(vdep)
+#stargazer(vdep)
+```
+
+```{=latex}
+\begin{table}[!htbp] \centering 
+  \caption{Estadística descriptiva de variables dependientes candidatas} 
+  \label{Estadística descriptiva de variables dependientes candidatas} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Statistic & \multicolumn{1}{c}{N} & \multicolumn{1}{c}{Mean} & \multicolumn{1}{c}{St. Dev.} & \multicolumn{1}{c}{Min} & \multicolumn{1}{c}{Max}& \multicolumn{1}{c}{Asim} & \multicolumn{1}{c}{Curt} \\ 
+\hline \\[-1.8ex] 
+MEDIA\_DE\_CASOS & 3,047 & 606.339 & 1,416.356 & 6.000 & 38,150.000 & 10.67 & 207.7 \\ 
+MUERTES\_ANUALES\_PROMEDIO & 3,047 & 185.966 & 504.134 & 3 & 14,010 & 11.93 & 242.09 \\ 
+MUERTES\_POR\_100K & 3,047 & 178.664 & 27.752 & 59.700 & 362.800 & 0.274 & 1.35 \\ 
+TASA\_DE\_INCIDENCIA & 3,047 & 448.269 & 54.561 & 201.300 & 1,206.900 & 0.77 & 16.75\\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+```
+
+```{r, echo=FALSE, message = FALSE, warning=FALSE}
+p1<-ggplot(vdep,aes(x=MEDIA_DE_CASOS))+
+  geom_histogram(col='black', fill='violet')+
+    labs(title = "Histograma de la media de casos")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 9))+
+  theme(axis.title = element_text(size = 6))
+p2<-ggplot(vdep,aes(x=MUERTES_ANUALES_PROMEDIO))+
+  geom_histogram(col='black', fill='violet')+
+    labs(title = "Histograma de las muertes anuales promedio")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 9))+
+  theme(axis.title = element_text(size = 6))
+p3<-ggplot(vdep,aes(x=MUERTES_POR_100K))+
+  geom_histogram(aes(y =..density..),col='black', fill='violet')+
+    labs(title = "Histograma de las muertes por cada 100K habitantes")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 9))+
+  theme(axis.title = element_text(size = 6))+
+  stat_function(fun = dnorm, args = list(mean = mean(datos$MUERTES_POR_100K),  sd = sd(datos$MUERTES_POR_100K)), size=0.5)
+p4<-ggplot(vdep,aes(x=TASA_DE_INCIDENCIA))+
+  geom_histogram(aes(y =..density..),col='black', fill='violet')+
+    labs(title = "Histograma de la tasa de incidencia")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 9))+
+  theme(axis.title = element_text(size = 6))+
+   stat_function(fun = dnorm, args = list(mean = mean(datos$TASA_DE_INCIDENCIA),  sd = sd(datos$TASA_DE_INCIDENCIA)), size=0.5)
+p1+p2+p3+p4
+```
+
+Dentro de la base de datos hay cuatro variables que son candidatas a ser la variable explicativa. La media de casos y las muertes anuales promedio dependen del tamaño de la población de cada condado, por lo cual su distribución de ambas variables no se asemeja a la de una distribución normal de los datos, lo que se puede observar tanto en las graficas, como en sus valores de asimetria y curtosis. Las muertes por cadas 100 mil habitantes y la tasa de incidencia son variables que estan ajustadas al tamaño de la población dentro del condado y, al ser tasas, típicamente esas variables se distribuyen conforme a una distribución normal. 
+
+De acuerdo a la tabla 1, la variable muertes por cada 100 mil habitantes es la que presenta el mejor comportamiento normal y por lo tanto la tomaremos como la variable respuesta a modelar. 
+
+Así, una vez seleccionada la tasa de mortalidad por cada 100,000 habitantes, se muestra una visualización del nivel de la tasa entre los condados de Estados Unidos.
+
+\pagebreak
+
+```{r, echo=FALSE, message = FALSE, warning=FALSE, fig.align='center' , out.width="95%"}
+library("urbnmapr")
+counties <- read_excel("counties.xlsx")
+
+counties_sf <- get_urbn_map("counties", sf = TRUE)
+
+data<-inner_join(datos, counties,by=c('INDICE'))
+
+counties_map <-inner_join(counties_sf,data,by=c('county_name', 'state_name'))
+
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+  
+  ggplot(data=counties_map) +
+    geom_sf(aes(fill = MUERTES_POR_100K)) + 
+    scale_fill_gradientn(colours = pal)+ 
+    labs(title="Tasa de mortalidad de cáncer, por condado, Estados Unidos", 
+       #subtitle="",
+       x="Longitud",
+       y="Latitud",
+       caption="Estimaciones con información de cancer.gov y census.gov")
+```
+
+```{=latex}
+\begin{table}[!ht] 
+\centering 
+  \caption{Número de condados, por estado} 
+  \label{Número de condados, por estado} 
+\begin{tabular}{|l|l|l|l|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Estado}} & \multicolumn{1}{c|}{\textbf{No.}} & \multicolumn{1}{c|}{\textbf{Estado}} & \multicolumn{1}{c|}{\textbf{No.}} \\ \hline
+Washington                            & 39                                & California                           & 57                                \\ \hline
+South Carolina                        & 46                                & New York                             & 62                                \\ \hline
+Louisiana                             & 64                                & Wyoming                              & 23                                \\ \hline
+Virginia                              & 180                               & Michigan                             & 83                                \\ \hline
+Idaho                                 & 42                                & Alaska                               & 18                                \\ \hline
+Iowa                                  & 99                                & Maryland                             & 24                                \\ \hline
+Kentucky                              & 120                               & Kansas                               & 177                               \\ \hline
+Missouri                              & 115                               & Tennessee                            & 95                                \\ \hline
+Oklahoma                              & 77                                & Texas                                & 233                               \\ \hline
+Colorado                              & 60                                & Maine                                & 16                                \\ \hline
+Illinois                              & 102                               & Arizona                              & 15                                \\ \hline
+Indiana                               & 92                                & Georgia                              & 155                               \\ \hline
+Mississippi                           & 82                                & Arkansas                             & 75                                \\ \hline
+Nebraska                              & 80                                & South Dakota                         & 59                                \\ \hline
+North Dakota                          & 51                                & Alabama                              & 63                                \\ \hline
+Ohio                                  & 87                                & West Virginia                        & 55                                \\ \hline
+Pennsylvania                          & 67                                & Utah                                 & 27                                \\ \hline
+Wisconsin                             & 72                                & Vermont                              & 14                                \\ \hline
+Vermont                               & 14                                & Montana                              & 48                                \\ \hline
+Minnesota                             & 87                                & New Hampshire                        & 10                                \\ \hline
+Florida                               & 66                                & New Mexico                           & 32                                \\ \hline
+North Carolina                        & 99                                & Oregon                               & 36                                \\ \hline
+\end{tabular}
+\end{table} 
+```
+
+\pagebreak
+
+### Análisis descriptivo de las variables independientes presentes en la tabla de datos provista.
+
+Con el objetivo de inspeccionar de forma gráfica las variables utilizadas en el análisis, se presenta análisis de estadística descriptiva de las variables dependientes.
+
+Por principio, se presenta una gráfica de la población estimada por condado en el año de 2015.
+
+```{r, echo=FALSE}
+boxplot(datos[, "POBLACION_ESTIMADA_2015"],
+        main = "Distribución de población estimada 2015", col = "pink", border = "red", vertical = TRUE, cex.axis=0.5,las=2,  log = "y")
+```
+
+La información se presenta en escala logarítmica en tanto la distribución de población presenta muchos valores por encima del brazo superior de la gráfica. Esto es evidencia de la asimetría de la distribución donde la cola izquierda es muy pesada al existir diversos condados con población muy grande.
+
+
+```{r, echo=FALSE}
+#Boxplox de variables con el mismo orden de magnitud.
+par(pty = "s")
+boxplot(datos[, "ESTUDIOS_CLINICOS_PERCAPITA"],
+        main = "Distribución de estudios clínicos per cápita", col = "pink", border = "red", vertical = TRUE, cex.axis=0.5,las=2)
+```
+
+Además, se presenta información de variables que están relacionadas con la consecuencia mortal de enfermedad cancerosa. Existen argumentos para que la variable de estudios clínicos per cápita se asocie de forma positiva o negativa con las muertes por cáncer. Positiva, si se admite que a mayores casos diagnosticados, mayor incidencia de la enfermedad y mayores consecuencias mortales; negativa si se admite. De cualquier forma, se advierte que existen diversos condados donde la cuantía de estudios per cápita es muy alta. 
+
+```{r, echo=FALSE}
+boxplot(datos[, "TASA_NATALIDAD"],
+        main = "Distribución de tasa de natalidad", col = "yellow", border = "orange", vertical = TRUE, cex.axis=0.5,las=2)
+```
+Se presenta la distribución de la tasa de natalidad, donde las unidades se expresan en términos de número de nacimientos por cada $1,000$ habitantes. Se advierte que el rango es amplio entre los condados, donde coexisten condados con tasas de natalidad cercanas a cero, y por el otro extremo, tasas de natalidad del nivel de países desarrollados, como México. 
+
+Por otra parte, al analizar las variables, se detectó que en la variable de mediana de edad existen 30 datos con mediana de edad mayores a 100 (lo cuál es inconsistente con las medianas de edad por sexo, y poblacionalmente hablando, no tiene sentido). 
+
+```{r, echo=FALSE}
+boxplot(datos[, c("MEDIANA_EDAD","MEDIANA_EDAD_HOMBRES","MEDIANA_EDAD_MUJER")],
+        main = "Edad mediana de la poblacion", col = "lightblue", border = "blue", vertical = TRUE, cex.axis=0.5,las=2)
+```
+
+Por ello, se cambiaron dichas observaciones utilizando el promedio de la mediana edad mujeres y mediana edad hombres. La distribución corregida se visualiza de la siguiente forma:
+
+```{r, echo=FALSE}
+i<-which(datos$MEDIANA_EDAD> 100)
+datos$MEDIANA_EDAD<- replace(datos$MEDIANA_EDAD,i, mean (c( datos$MEDIANA_EDAD_HOMBRES [101], datos$MEDIANA_EDAD_MUJER[101])))
+```
+
+
+```{r, echo=FALSE}
+boxplot(datos[, c("MEDIANA_EDAD","MEDIANA_EDAD_HOMBRES","MEDIANA_EDAD_MUJER")],
+        main = "Edad mediana de la poblacion en el condado", col = "lightblue", border = "blue", vertical = TRUE, cex.axis=0.5,las=2)
+```
+
+Un hecho sobresaliente indica que las mujeres viven mayor tiempo que los hombres, esto se expresa en percentil 25, 50 y 75 mayores del boxplot de la edad mediana de la mujer respecto a la edad mediana del hombre. 
+
+```{r, echo=FALSE}
+boxplot(datos[, c("PORCENTAJE_POBLACION_POBREZA","PORCENTAJE_CASADOS", "PORCENTAJE_EMPLEADOS", "PORCENTAJE_DESEMPLEADOS", 
+                  "PORCENTAJE_COB_PRIVADA", "PORCENTAJE_SOLO_COB_PRIVADA", "PORCENTAJE_COB_PUBLICA", 
+                  "PORCENTAJE_SOLO_COB_PUBLICA", "PORCENTAJE_BLANCOS", "PORCENTAJE_NEGROS", "PORCENTAJE_ASIATICOS", 
+                  "PORCENTAJE_OTRO_GRUPO")],
+        main = "Porcentaje de la poblacion", col = "lightgreen", border = "darkgreen", vertical = TRUE, cex.axis=0.5,las=2)
+
+```
+
+Los gráficos de porcentaje involucran variables de distintas temáticas que se analizan a continuación: Respecto a pobreza, se sabe que Estados Unidos cuenta con una línea de pobreza relativamente baja respecto a otros países, lo cual se traduce en porcentajes bajos de pobreza entre los condados. Además, como país el porcentaje de población en situación de matrimonio aún es alta, aunque con una tendencia a la baja sí se analizará en el largo plazo. La tasa de empleo, al ser respecto al total de la población y no respecto a la población económicamente activa en edad laboral, representa un porcentaje acorde a su estructura etaria. Respecto a servicios de salud, que la cobertura privada sea la de mayor incidencia solo habla del modelo de salud que impera en Estados Unidos, influenciado por las aseguradoras y el pago de servicios de salud onerosos para la población. Sin embargo, destaca como, a partir de la administración de Barack Obama, la incidencia de población con cobertura pública, ya sea conjunto o único, habla del rezago que se enfrentó y lo que implica en términos de equidad en el acceso a salud. Por último, respecto a la composición étnica, se muestra como la población blanca y la población afroamericana se distribuyen de forma inversa, se espera ver un coeficiente de correlación negativo, y destaca como población y de otros grupos (latinos, principalmente) pueden representar una proporción significativa en ciertos condados del país. 
+
+Análisis conjunto entre las variables independientes y la variable dependiente, se presenta un mapa de correlacion. 
+
+```{r, echo=FALSE, message=FALSE}
+dat<-datos [, -c(1:3,5,10,14)]
+corPlot(dat,las=2, number=FALSE, main="Correlación entre las variables", cex.axis = 0.4)
+
+```
+De acuerdo con la gráfica, las variables estudios clinicos percapita y la variable tasa de natalidad presentan baja correlación con las otras variables. Las variables mediana de edad, mediana de edad en hombres y mediana de edad en mujeres, estan altamente correlacionadas entre ellas, y presentan poca correlación con las muertes por cada 100 mil habitantes.
+
+### Descripción general de los procesos y/o modelos necesarios, explicando su relevancia en la búsqueda de cumplir con objetivos planteados. 
+
+### Modelos de regresión obtenidos
+
+Por principio, decidimos explorar un conjunto de modelos partiendo de distintas variables explicativas. Utilizamos criterios de optimización, procedimientos *stepwise*, criterios orientados conforme a la  literatura y procuramos tener modelos con estimadores que sean sencillos de interpretar, para que el modelo pueda ser utilizado con fines de política pública. En primer lugar, se parte de un modelo saturado con todas las variables independientes, buscamos dos modelos optimizadas por los algoritmos de *stepwise*, tanto forward como backward, se estimó un modelo adicional para mantener las variables explicativas que fuesen estadísticamente significativas, se estimó un quinto modelo reducido en variables explicativas y se añadió un último modelo con los estados como regresores de segundo nivel. A continuación, se presentan las gráficas de optimización en stepwise de un par de propuestas y se muestra la comparación de los 6 modelos en términos de los coeficientes de los estimadores y estadísticos de selección de modelos. 
+
+```{r, echo=FALSE, message=FALSE}
+attach(counties_map)
+# datos <- subset(datos, select = -c(LOCALIDAD, INDICE, INGRESOS_ALMACENDADOS))
+m1 <- lm(MUERTES_POR_100K ~ MEDIANA_INGRESOS+POBLACION_ESTIMADA_2015+
+         POBLACION_ESTIMADA_2015 + PORCENTAJE_POBLACION_POBREZA + 
+         ESTUDIOS_CLINICOS_PERCAPITA + INGRESOS_ALMACENDADOS + MEDIANA_EDAD+ 
+         MEDIANA_EDAD_HOMBRES +MEDIANA_EDAD_MUJER  + 
+         PORCENTAJE_CASADOS+ PORCENTAJE_EMPLEADOS + PORCENTAJE_DESEMPLEADOS+
+         PORCENTAJE_COB_PRIVADA + PORCENTAJE_SOLO_COB_PRIVADA + 
+         PORCENTAJE_COB_PUBLICA + PORCENTAJE_SOLO_COB_PUBLICA +
+         PORCENTAJE_BLANCOS + PORCENTAJE_NEGROS + PORCENTAJE_ASIATICOS +
+         PORCENTAJE_OTRO_GRUPO + TASA_NATALIDAD, data= counties_map)
+# summary(m1)
+mo1<- ols_step_forward_p(m1, progress = FALSE, details = FALSE)
+plot(mo1)
+
+# Modelo 1 saturado
+mod1<-lm(MUERTES_POR_100K~ MEDIANA_INGRESOS+
+         POBLACION_ESTIMADA_2015 + PORCENTAJE_POBLACION_POBREZA + 
+         ESTUDIOS_CLINICOS_PERCAPITA + INGRESOS_ALMACENDADOS + MEDIANA_EDAD+ 
+         MEDIANA_EDAD_HOMBRES +MEDIANA_EDAD_MUJER  + 
+         PORCENTAJE_CASADOS+ PORCENTAJE_EMPLEADOS + PORCENTAJE_DESEMPLEADOS+
+         PORCENTAJE_COB_PRIVADA + PORCENTAJE_SOLO_COB_PRIVADA + 
+         PORCENTAJE_COB_PUBLICA + PORCENTAJE_SOLO_COB_PUBLICA +
+         PORCENTAJE_BLANCOS + PORCENTAJE_NEGROS + PORCENTAJE_ASIATICOS +
+         PORCENTAJE_OTRO_GRUPO + TASA_NATALIDAD, data=counties_map)
+# summary(mod1)
+```
+
+```{r, echo=FALSE, message=FALSE}
+# Modelo 2 se eliminaron variables no significativas: ESTUDIOS_CLINICOS_PERCAPITA Y MEDIANA_EDAD_MUJER Y SE AGREGA MEDIANA_EDAD Y MEDIANA_EDAD_HOMBRE
+mod2<-lm(MUERTES_POR_100K~ MEDIANA_INGRESOS+
+          POBLACION_ESTIMADA_2015 + PORCENTAJE_POBLACION_POBREZA + 
+         INGRESOS_ALMACENDADOS + MEDIANA_EDAD+ 
+          MEDIANA_EDAD_HOMBRES +MEDIANA_EDAD_MUJER  + 
+          PORCENTAJE_CASADOS+ PORCENTAJE_EMPLEADOS + PORCENTAJE_DESEMPLEADOS+
+          PORCENTAJE_COB_PRIVADA + PORCENTAJE_SOLO_COB_PRIVADA + 
+           PORCENTAJE_SOLO_COB_PUBLICA +
+           PORCENTAJE_NEGROS + PORCENTAJE_ASIATICOS +
+          PORCENTAJE_OTRO_GRUPO + TASA_NATALIDAD, data=counties_map)
+# summary(mod2)
+
+```
+
+```{r, echo=FALSE, message=FALSE}
+# Modelo 3 TODAS LAS VARIABLES SIGNIFICATIVAS
+mod3<-lm(MUERTES_POR_100K~ MEDIANA_INGRESOS+
+           PORCENTAJE_POBLACION_POBREZA + 
+          INGRESOS_ALMACENDADOS 
+           +MEDIANA_EDAD_MUJER  + 
+           PORCENTAJE_EMPLEADOS + PORCENTAJE_DESEMPLEADOS+
+          PORCENTAJE_SOLO_COB_PRIVADA + 
+          PORCENTAJE_SOLO_COB_PUBLICA +
+          PORCENTAJE_NEGROS + PORCENTAJE_ASIATICOS +
+          PORCENTAJE_OTRO_GRUPO + TASA_NATALIDAD, data=counties_map)
+# summary(mod3)
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+# Modelo 4 MODELO OCTAVIO
+mod4<-lm(MUERTES_POR_100K ~ PORCENTAJE_POBLACION_POBREZA + MEDIANA_INGRESOS + PORCENTAJE_CASADOS + PORCENTAJE_EMPLEADOS + PORCENTAJE_ASIATICOS + TASA_NATALIDAD, data = counties_map)
+# summary(mod4)
+```
+
+
+```{r, echo=FALSE}
+# Modelo 5 stepwise David producto de stepwise
+mod5<-lm(MUERTES_POR_100K ~  PORCENTAJE_SOLO_COB_PUBLICA + PORCENTAJE_OTRO_GRUPO + 
+            PORCENTAJE_POBLACION_POBREZA + PORCENTAJE_DESEMPLEADOS + 
+            MEDIANA_INGRESOS + PORCENTAJE_SOLO_COB_PRIVADA + TASA_NATALIDAD + 
+            MEDIANA_EDAD_HOMBRES + PORCENTAJE_EMPLEADOS + PORCENTAJE_NEGROS + 
+            PORCENTAJE_ASIATICOS + POBLACION_ESTIMADA_2015 + PORCENTAJE_CASADOS + 
+            PORCENTAJE_COB_PRIVADA + MEDIANA_EDAD_MUJER + MEDIANA_EDAD, data=counties_map)
+# summary(mod5)
+```
+
+```{r, echo=FALSE}
+
+# Propuesta Modelo Marco variables de segundo nivel 
+counties_map$state_name<-as.factor(counties_map$state_name)
+datos <- subset(counties_map, select = -c(county_full, geometry))
+
+m6 <- lm(MUERTES_POR_100K ~ state_abbv + INGRESOS_ALMACENDADOS + POBLACION_ESTIMADA_2015 + PORCENTAJE_POBLACION_POBREZA + MEDIANA_EDAD + MEDIANA_EDAD_HOMBRES + MEDIANA_EDAD_MUJER + PORCENTAJE_CASADOS + PORCENTAJE_EMPLEADOS + PORCENTAJE_DESEMPLEADOS + PORCENTAJE_COB_PRIVADA + PORCENTAJE_SOLO_COB_PRIVADA + PORCENTAJE_COB_PUBLICA + PORCENTAJE_SOLO_COB_PUBLICA + PORCENTAJE_BLANCOS + PORCENTAJE_NEGROS + PORCENTAJE_ASIATICOS + PORCENTAJE_OTRO_GRUPO + TASA_NATALIDAD , data= counties_map)
+mo6<- ols_step_forward_p(m6, progress = FALSE, details = FALSE)
+plot(mo6)
+
+mod6 <- lm(MUERTES_POR_100K ~ PORCENTAJE_SOLO_COB_PUBLICA + PORCENTAJE_OTRO_GRUPO + PORCENTAJE_POBLACION_POBREZA + PORCENTAJE_DESEMPLEADOS + PORCENTAJE_ASIATICOS + TASA_NATALIDAD + MEDIANA_EDAD_HOMBRES + state_abbv + PORCENTAJE_COB_PUBLICA + PORCENTAJE_CASADOS + MEDIANA_EDAD_MUJER + POBLACION_ESTIMADA_2015 + PORCENTAJE_BLANCOS + PORCENTAJE_SOLO_COB_PRIVADA + INGRESOS_ALMACENDADOS, data= counties_map)
+# summary(mod6)
+
+```
+
+Como se advierte en la tabla, el modelo 6 que introduce al estado como variable explicativa categórica resultó ser aquél que se prefiere en términos de $R^{2}_{\alpha}$, error cuadrático medio y los criterios de información de Akaike y Bayesiano. 
+
+### Pruébas de hipótesis para los parámetros de los modelos de regresión obtenidos y para los modelos mismos, comparativa de modelos. 
+
+Con la información del modelo 6, se procedió a hacer inferencia sobre los parámetros del modelo. Se presenta información del coeficiente de regresión, su error estándar, elde Wald para probar $H_{0}: \beta_{i}=0$ vs $H_{1}: \beta_{i} \neq 0$ con $W=\frac{\hat{\beta_{i}}}{\sqrt{S^{2}(X^{t}X)^{-1}_{ii}}}$, su correspondiente valor de $t$ de Student, p-value e intervalo de confianza al $95\%$. 
+
+\pagebreak
+
+```{r, echo=FALSE}
+# LRstats(mod1, mod2, mod3, mod4, mod5, mod6)
+```
+
+```{r, echo=FALSE}
+mod_sel=mod6
+```
+
+```{r, echo=FALSE}
+# stargazer(mod1, mod2, mod3, mod4, mod5, mod6, 
+#          type = "latex",
+#          digits = 3,
+#          dep.var.labels = c("Muertes por 100 mil hab."), # Label dep variable
+          # Covariate labels
+#          covariate.labels = c(),
+          # Name the models
+#          column.labels = c("Modelo 1", "Modelo 2", "Modelo 3", "Modelo 4", "Modelo 5", "Modelo 6"),
+#          header=FALSE, # to get rid of r package output text
+#          single.row = TRUE, # to put coefficients and standard errors on same line
+#          no.space = TRUE, # to remove the spaces after each line of coefficients
+#          column.sep.width = "3pt", # to reduce column width
+#          font.size = "small" # to make font size smaller
+# ) 
+
+
+
+
+```
+### Interpretación de las estimaciones
+
+El modelo está organizado de tal forma que se presenten las variables independientes en términos de temáticas de interes. Así, se presentan variables económicas (pobreza y desemple), variables demográficas (población estimada, mediana de edad de hombres y mujeres, porcentaje de casados y tasa de natalidad), variables de cobertura de salud (privado y público), variables étnicas (porcentaje de población blanca, asiática u otros grupos), se muestran las variables categóricas, tanto el ingreso por intervalos como el estado. El énfasis de interpretación se hace en las variables que son estadísticamente significativas con un $\alpha=0.01$ o $\alpha=0.05$.
+
+**PORCENTAJE_POBLACION_POBREZA (-0.591)**
+
+El signo obtuvido en la regresión es negativo, lo que indica que un aumento de un por ciento en la incidencia de pobreza, disminuirá un 0.591 las muertes de cáncer por cada mil habitantes en el condado. Este es un resultado que no está conforme a los resultados de estudios disponibles, indicando que el nivel de pobreza impacta la posibilidad de muerte por cáncer. Los condados con pobreza persistente, tienen tasas de mortalidad por cáncer más altas.
+
+**PORCENTAJE_DESEMPLEADOS (0.806)**
+
+El signo obtuvido en la regresión es positivo, lo cual indica que un aumento de uno por ciento en el porcentaje de desempleados, esto aumentará en 0.806 las muertes por cancer por cada mil habitantes. Este resultado, sí está de acuerdo con los estudios realizados al respecto. Donde se indica que la población con menos recursos económicos es más propensa a morir por cáncer.
+
+**TASA_NATALIDAD (-0.500)**
+
+El signo en la regresión es negativo, lo cual corresponde conforme a las relaciones demográficas esperadas. Un aumento en uno por ciento de la tasa de natalidad, se espera que disminuya en 0.500 las muertes de cancer por cada mil habitantes, en términos de aumentar este denominador. Y no solo ello, en la revisión de literatura se encontró que población infantil que padece cáncer, si se atiende de forma oportuna, ha disminuido la mortalidad de la enfermedad. 
+
+**PORCENTAJE_SOLO_COB_PUBLICA (0.753) y PORCENTAJE_COB_PUBLICA (0.829)**
+
+Como es positivo, representa un incremento en las Muertes_por_100K, cuando aumenta en una unidad el porcentaje de cobertura única de servicios de salud público, el incremento en las muertes por cáncer es de 0.753. En el mismo sentido, aumentar en una unidad el porcentaje de población con seguro público, incrementa las muertes de cáncer en 0.829 por cada mil habitantes.  Es decir, el contar con servicio de salud público funciona como predictor de mortalidad por cáncer.
+
+**PORCENTAJE_ASIATICOS (-0.630) y PORCENTAJE_OTRO_GRUPO (-0.728)**
+
+Este resultado sí está de acuerdo a los estudios presentes en la revisión de literatura, en el caso de la población asiática. Un aumento de un por ciento de población asiática se traduce en una reducción de las muertes por cáncer de 0.630 por cada mil habitantes. Este resultado podría relacionarse con las costumbres alimenticias y genéticas del individuo. En el mismo sentido, el porcentaje de otro grupo también muestra una asociación negativa con la mortalidad de cáncer. Un aumento de un por ciento en dichos grupos poblacionales se traduce en una reducción de 0.728 muertes por cada mil habitantes en el condado. 
+
+**INGRESOS POR INTERVALOS** 
+
+En el caso de la variable categórica de ingresos por intervalos, se tuvo que la categoría de referencia son aquellos condados que cuentan con ingreso entre (34218.1, 37413.8]. Así, a partir del quinto decil, es decir, entre los $\$42,724.4$ - $\$45,201$ dólares, se tiene un efecto negativo y muy significativo sobre la mortalidad de cáncer. Para aquellos condados en este intervalo, se espera que la mortalidad sea -3.562 menor a los condados en la categoría de intervalo de ingreso de referencia. Este efecto aumenta conforme se escala en la distribución de ingreso, teniendo que los condados en el décimo decil de ingreso ($\$61,494.5$ - $\$125,635$) presenten una mortalidad -9.624 veces menor a los condados en la categoría de referencia. Este es un resultado que está conforme a la realidad: a mayores recursos menor es la probabilidad de muerte por cáncer.
+
+**ESTADO**
+
+Varios estudios han informado sobre la variación en la mortalidad por cáncer por estado. Esta variación, se explica, al menos parcialmente, por diferencias en los factores de riesgo, factores socioeconómicos y acceso a tratamiento de alta calidad. En el caso de la variable categórica de estado, se tuvo que la categoría de referencia es el estado de Alaska. Así, Arizona (-58.269), Colorado (-53.368), Nuevo México (-48.604) y Utah (-49.100) son estados donde hay un efecto significativo de residencia en dichos estados sobre la mortalida de cáncer. En el sentido contrario, estados como Indiana, Oklahoma, Tennessee, Missouri, Kentucky y Lousiana no tienen un efecto estadísticamente significativo al estado de referencia. Así, el acceso a la salud, La atención médica y la calidad de la atención médica disponible varían enormemente entre los estados y los diferentes grupos socioeconómicos y el modelo propuesto da cuenta de ello. 
+
+### Validación de los supuestos del modelo seleccionado 
+
+**Pruebas gráficas**
+
+```{r, echo=FALSE, warning=FALSE}
+# Se generan los errores de los modelos
+errores<-m6$residuals
+# Modelo 1
+
+# Normalidad ##
+
+x=seq(min(errores), max(errores), length = length(errores))
+fun1 <- dnorm(x, mean = mean(errores), sd = sd(errores))
+
+par(mfrow=c(1,2)) 
+hist(errores, prob=TRUE, xlab="Errores", main="Histograma de errores y \ndensidad normal")
+lines(x, fun1, col = "darkblue", lwd = 2)
+
+par(mfrow=c(2,2)) 
+plot(mod6)
+par(mfrow=c(1,1))
+
+
+```
+
+Se presentan las pruebas gráficas para verificar el supuesto de la regresión. En cuanto a la normalidad se puede observar que tanto en el histograma como en la gráfica Q-Q residuals los errores se distribuyen normalmente. Mediante ña grafica Residuals vs Fitted se puede observar una relación lineal entre las variables predictoras y la variable de resultado, ya que se observa una linea recta, sin embargo no se distribuyen de igual forma al rededor de esta línea.
+
+Mediante la gráfica Scale-Location o de ubicación extendida, se muestra si los residuos se distribuyen por igual a lo largo de los rangos de predictores. Debido a que no se muestra una línea recta con distribución aleatoria, se podría decir que no hay homocedasticidad. Por último mediante la gráfica Residuals vs Leverage que nos indica si hay valores influyentes, se observa que no hay ya que no hay errores fuera de la línea discontinua que representa la distancia de Cook.
+
+**Pruebas análiticas**
+```{r, echo=FALSE }
+# Shapiro test
+ #shapiro.test(errores)
+# Breusch-Pagan test
+#bptest(mod6)
+```
+
+```{=latex}
+\begin{table}[h!]
+ \centering
+  \caption{Prueba de normalidad Shapiro-Wilks} 
+\begin{tabular}{|l|l|l|}
+\hline
+$H_{0}$ & W       & p-value \\ \hline
+$\epsilon_{i} \sim N(0, \sigma^{2})$ & 0.97116 & 2.2e-16  \\ \hline
+\end{tabular}
+\end{table}
+```
+
+```{=latex}
+\begin{table}[h!]
+ \centering
+  \caption{Prueba de homoscedasticidad Breusch-Pagan} 
+\begin{tabular}{|l|l|l|l|}
+\hline
+$H_{0}$ & BP & df      & p-value \\ \hline
+$\epsilon_{i} \sim N(0, \sigma^{2})$ & 287.81 & 72 & 2.2e-16  \\ \hline
+\end{tabular}
+\end{table}
+```
+
+Tanto en la grafica qqplot como en el histograma pareciera que ajusta a una densidad normal. Sin embargo, para la prueba de normalidad Shapiro-Wilk, se compara el p-value del estadístico $W$ de prueba y se advierte que es menor a un nivel $\alpha=0.05$, por lo cual se rechaza la hipótesis nula de normalidad de los residuos.
+
+La prueba de homoscedasticidad Breusch-Pagan busca obtener evidencia estadística del cumplimiento del supuesto de varianza constante en los residuales. Dado que el p-value del estadístico es menor a un nivel $\alpha=0.05$,  se rechaza la hipótesis nula de varianza constante en los errores del modelo. 
+
+**Supuesto de independencia**
+
+```{r, echo=FALSE, fig.height = 5, fig.width = 10 , out.width="75%", warning = FALSE, message = FALSE}
+#################### 
+# Autocorrelación #
+###################
+
+acf2(errores)
+
+
+#####################
+#  Estacionariedad  #
+#####################
+
+# Pruebas para detección de raíz unitaria: Phillips-Perron 
+
+#Ho: La serie contiene una raiz unitaria
+
+# PP.test(errores1)
+
+```
+
+En el caso del supuesto de independencia se graficó la función de autocorrelación y de autocorrelación parcial, y en tanto algunos de los rezagos se encuentran dentro de las bandas de no autocorrelación y de autocorrelación parcial, se concluye que los errores no cumplen con el supuesto de independencia, ya que  el espacio geografico influye en la variable respuesta muerte por cada 100 mil habitantes, y como se puede observar en el mapa anterior, los condados cercanos tiene comportamientos similares en cuanto a la variable respuesta.
+
+```{r, echo=FALSE}
+# stargazer(m3, m3_fw, 
+#          type = "latex",
+#          digits = 3,
+#          dep.var.labels = c("Fertilidad en la región"), # Label dep variable
+        # Covariate labels
+#          covariate.labels = c("Agricultura", "Puntaje militar", "Educación mayor a primaria", "Pob. Católica", "Mortalidad infantil"),
+          # Name the models
+#          column.labels = c("Modelo completo", "Modelo reducido")
+#) 
+```
+
+\pagebreak
+
+## Conclusión
+
+Padecer los estragos del cáncer en un contexto de desigualdad en salud es uno de los desafíos que enfrenta la sociedad estadounidense. Con el uso de información a nivel condado, fue posible explicitar desigualdades al modelar las consecuencias mortales de la enfermedad cancerosa respecto a características de los individuos y de su entorno. Dentro de los principales resultados, se señala que a partir del quinto decil de ingresos, se tiene un efecto reductor notable sobre la mortalidad de cáncer. 
+
+En el mismo sentido, se pudo documentar que diversos estados llevan a cabo políticas de salud más activas dentro de su población, lo cual se traduce en efectos importantes de disminución de la mortalidad del cáncer.
+
+Como línea futura de investigación, se espera mejorar el modelo incluyendo la estructura de autocorrelación espacial presente en los datos a nivel condado. El combate a las desigualdades requiere el conocimiento y uso de herramientas estadísticas de vanguardia que permitan obtener evidencia que sirva de insumo para lograr una sociedad más justa. 
+
+\pagebreak
+
+## Bibliografía
+
+American Cancer Society (2004). Cancer Facts & Figures 2024. Atlanta: American Cancer Society.
+
+Chen, X. (2018). A spatial and temporal analysis of the socioeconomic factors associated with breast cancer in Illinois using geographically weighted sgeneralized linear regression. Journal of Geovisualization and Spatial Analysis, 2(1), 5.
+
+Clegg, L. X., Reichman, M. E., Miller, B. A., Hankey, B. F., Singh, G. K., Lin, Y. D.,  & Edwards, B. K. (2009). Impact of socioeconomic status on cancer incidence and stage at diagnosis: selected findings from the surveillance, epidemiology, and end results: National Longitudinal Mortality Study. Cancer causes & control, 20, 417-435.
+
+Hallowell, B. D., Endeshaw, M., McKenna, M. T., Senkomago, V., Razzaghi, H., & Saraiya, M. (2019). Cancer mortality rates among US and foreign-born individuals: United States 2005–2014. Preventive medicine, 126, 105755.
+
+LaPar, D. J., Bhamidipati, C. M., Harris, D. A., Kozower, B. D., Jones, D. R., Kron, I. L., ... & Lau, C. L. (2011). Gender, race, and socioeconomic status affects outcomes after lung cancer resections in the United States. The Annals of thoracic surgery, 92(2), 434-439
+
+Liss, D. T., & Baker, D. W. (2014). Understanding current racial/ethnic disparities in colorectal cancer screening in the United States: the contribution of socioeconomic status and access to care. American journal of preventive medicine, 46(3), 228-236.
+
+Mancuso, T. F., & Sterling, T. D. (1974). Relation of place of birth and migration in cancer mortality in the US—a study of Ohio residents (1959–1967). Journal of Chronic Diseases, 27(9), 459-474.
+
+Mokdad, A. H., Dwyer-Lindgren, L., Fitzmaurice, C., Stubbs, R. W., Bertozzi-Villa, A., Morozoff, C., ... & Murray, C. J. (2017). Trends and patterns of disparities in cancer mortality among US counties, 1980-2014. Jama, 317(4), 388-406.
+
+Moss, J. L., Pinto, C. N., Srinivasan, S., Cronin, K. A., & Croyle, R. T. (2020). Persistent poverty and cancer mortality rates: an analysis of county-level poverty designations. Cancer Epidemiology, Biomarkers & Prevention, 29(10), 1949-1954.
+
+Mueller, C. B., Ames, F., & Anderson, G. D. (1978). Breast cancer in 3,558 women: age as a significant determinant in the rate of dying and causes of death. Surgery, 83(2), 123-132.
+
+Stanbury, J. F., Baade, P. D., Yu, Y., & Yu, X. Q. (2016). Cancer survival in New South Wales, Australia: socioeconomic disparities remain despite overall improvements. BMC cancer, 16, 1-9.
+
+Tavera-Zepeda, D. (2013) Actitudes y creencias asociadas al grado de adherencia al tratamiento en pacientes diabéticos tipo 2 usuarios de la Unidad de Medicina Familiar no. 28 Gabriel Mancera del IMSS. TESIUNAM.
+
+Ward, E., Jemal, A., Cokkinides, V., Singh, G. K., Cardinez, C., Ghafoor, A., & Thun, M. (2004). Cancer disparities by race/ethnicity and socioeconomic status. CA: a cancer journal for clinicians, 54(2), 78-93.
+
+Withrow, D. R., Berrington de González, A., Spillane, S., Freedman, N. D., Best, A. F., Chen, Y., & Shiels, M. S. (2019). Trends in mortality due to cancer in the United States by age and county-level income, 1999–2015. JNCI: Journal of the National Cancer Institute, 111(8), 863-866.
